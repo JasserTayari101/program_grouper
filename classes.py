@@ -46,6 +46,10 @@ class Runner(tk.Tk):
         
         self.exe_btn = tk.Button(self.btn_frm,text="RUN",command=self.runfile)
         self.exe_btn.grid(row=0,column=1)
+        
+        self.all_btn = tk.Button(self.btn_frm,text="RUN ALL",command=lambda :self.runfile(runall=True))
+        self.all_btn.grid(row=0,column=2)
+        
         self.binding()
         
     def binding(self):        #create bindings for moving up and down
@@ -66,7 +70,12 @@ class Runner(tk.Tk):
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
             self.labels[1].append(lbl)
             lbl.pack()
-    def runfile(self):
-        curr = self.labels[0]
-        current = (self.labels[1][curr]).cget("text")
-        os.system("sh %s"%current)
+    def runfile(self,runall=False):
+        if runall:
+            for lbl in self.labels[1]:
+                name = lbl.cget("text")
+                os.system("sh %s"%name)    
+        else:
+            curr = self.labels[0]
+            current = (self.labels[1][curr]).cget("text")
+            os.system("sh %s"%current)
