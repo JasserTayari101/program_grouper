@@ -37,7 +37,7 @@ class Runner(tk.Tk):
         #           creating a scrollbar
         #------------------------------------
         self.container = ScrollFrame()
-
+        
         self.container.grid(row=0,column=0,sticky="nsew")
         #---------------------------------------------------
         self.btn_frm = tk.Frame(self)
@@ -54,6 +54,14 @@ class Runner(tk.Tk):
         
         self.binding()
         
+        try:
+            self.data_file = open("data_file","r")      #when first opening the runner import the executables in data_file
+            self.added_files()                          #by adding them to the interface
+        except FileNotFoundError:
+            pass
+        finally:
+            self.data_file = open("data_file","a")      #then convert the open mode to append
+        
     def binding(self):        #create bindings for moving up and down
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
@@ -65,6 +73,15 @@ class Runner(tk.Tk):
             curr+=increm
             list_lbls[curr].configure(bg="grey")
             self.labels = (curr,list_lbls)
+    def added_files(self):      #used to add existing labels in the data file
+        for line in self.data_file:
+            line = line.strip()
+            lbl = tk.Label(self.container.scrollable_frame, text=line)
+            lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
+            self.labels[1].append(lbl)
+            lbl.pack()
+    
+    
     def openfile(self):
         patterns = ("*.bash","*.sh","*.zsh") if self.os_name.lower() == "posix" else ("*.exe",)
         filename = filedialog.askopenfilename(initialdir="/",filetypes=(("executables",patterns),("any","*.*") ) )  #platform specific patterns
@@ -72,6 +89,7 @@ class Runner(tk.Tk):
             lbl = tk.Label(self.container.scrollable_frame, text=filename)
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
             self.labels[1].append(lbl)
+            self.data_file.write(lbl.cget("text")+"\n")
             lbl.pack()
     def runfile(self,runall=False):
         if runall:
@@ -82,6 +100,7 @@ class Runner(tk.Tk):
             curr = self.labels[0]
             current = (self.labels[1][curr]).cget("text")
             os.system("sh %s"%current)
+    
     def destroy(self):
         super().destroy()
 
