@@ -128,3 +128,10 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
         with open("type.json","w") as f:
             json.dump(res,f)
         self.destroy()
+        
+        
+class User:
+    def __init__(self,username,password):
+        self.username = username
+        self.password = password
+        
