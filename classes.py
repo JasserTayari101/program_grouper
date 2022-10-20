@@ -44,7 +44,7 @@ class Runner(tk.Tk):
         self.open_btn = tk.Button(self.btn_frm,text="Open File",command=self.openfile)
         self.open_btn.grid(row=0,column=0)
         
-        self.exe_btn = tk.Button(self.btn_frm,text="RUN")
+        self.exe_btn = tk.Button(self.btn_frm,text="RUN",command=self.runfile)
         self.exe_btn.grid(row=0,column=1)
         self.binding()
         
@@ -66,3 +66,7 @@ class Runner(tk.Tk):
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
             self.labels[1].append(lbl)
             lbl.pack()
+    def runfile(self):
+        curr = self.labels[0]
+        current = (self.labels[1][curr]).cget("text")
+        os.system("sh %s"%current)
