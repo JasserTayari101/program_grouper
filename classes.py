@@ -26,7 +26,8 @@ class ScrollFrame(tk.Frame):
 class Runner(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.labels = (0,[])
+        self.labels = (0,[])    #   used for keeping track of the list of labels and the current selected one indicated by an integer
+        self.resizable(False,False)
         self.rowconfigure(0,minsize=450,weight=1)
         self.rowconfigure(1,minsize=50)
         
@@ -46,12 +47,13 @@ class Runner(tk.Tk):
         self.exe_btn = tk.Button(self.btn_frm,text="RUN")
         self.exe_btn.grid(row=0,column=1)
         self.binding()
-    def binding(self):        #create bindings
+        
+    def binding(self):        #create bindings for moving up and down
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
     def highlight_next(self,increm):
         list_lbls = self.labels[1]
-        curr = self.labels[0]
+        curr = self.labels[0]   #the current selected label
         if  ( (increm==1) and (curr<len(list_lbls)-1 ) ) or ( (increm==-1) and (curr>0)):
             list_lbls[curr].configure(bg="white")
             curr+=increm
