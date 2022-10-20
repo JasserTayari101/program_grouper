@@ -24,9 +24,11 @@ class ScrollFrame(tk.Frame):
         self.scrollbar.pack(side="right", fill="y")
 
 class Runner(tk.Tk):
-    def __init__(self):
+    def __init__(self,run_type):
         super().__init__()
-        self.labels = (0,[])    #   used for keeping track of the list of labels and the current selected one indicated by an integer
+        self.os_name = os.name      #used for os specific operations (windows/linux)
+        print(run_type)
+        self.labels = (0,[])    #   used for keeping track of the list of labels and the current selected one indicated by an integer, might be changed to a linked list DS
         self.resizable(False,False)
         self.rowconfigure(0,minsize=450,weight=1)
         self.rowconfigure(1,minsize=50)
@@ -64,7 +66,8 @@ class Runner(tk.Tk):
             list_lbls[curr].configure(bg="grey")
             self.labels = (curr,list_lbls)
     def openfile(self):
-        filename = filedialog.askopenfilename(initialdir="/",filetypes=(("executables","*.sh"),("any","*.*") ) )
+        patterns = ("*.bash","*.sh","*.zsh") if self.os_name.lower() == "posix" else ("*.exe",)
+        filename = filedialog.askopenfilename(initialdir="/",filetypes=(("executables",patterns),("any","*.*") ) )  #platform specific patterns
         if filename:
             lbl = tk.Label(self.container.scrollable_frame, text=filename)
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
@@ -79,3 +82,30 @@ class Runner(tk.Tk):
             curr = self.labels[0]
             current = (self.labels[1][curr]).cget("text")
             os.system("sh %s"%current)
+    def destroy(self):
+        super().destroy()
+
+
+
+class Login(tk.Tk):     #a login interface used to select between guest/sign in/sign up by creating a json file
+    def __init__(self):
+        super().__init__()
+        self.resizable(False,False)
+        self.guest_btn = tk.Button(self,text="Login as guest",command=self.guest)
+        self.guest_btn.pack()
+        
+        tk.Label(self,text="---------------------").pack()
+        
+        self.sign_in_btn = tk.Button(self,text="Sign in as existing user")
+        self.sign_in_btn.pack()
+        
+        tk.Label(self,text="---------------------").pack()
+        
+        self.sign_up_btn = tk.Button(self,text="Create new user")
+        self.sign_up_btn.pack()
+    def guest(self):
+        import json
+        res = {"type":"guest"}
+        with open("type.json","w") as f:
+            json.dump(res,f)
+        self.destroy()
