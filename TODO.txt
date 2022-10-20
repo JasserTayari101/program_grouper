@@ -1,0 +1,1 @@
+added the interaction functionality between User class , Runner and ,Login and different kind of logging (guest/user)
