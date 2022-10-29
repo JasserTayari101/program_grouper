@@ -1,1 +1,1 @@
-add sign up functionality and work on UI more
+add sign up functionality and work on UI to make it more futeristic
