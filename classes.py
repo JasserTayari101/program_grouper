@@ -55,6 +55,9 @@ class Runner(tk.Tk):
         self.all_btn = tk.Button(self.btn_frm,text="RUN ALL",command=lambda :self.runfile(runall=True))
         self.all_btn.grid(row=0,column=2)
         
+        self.sign_out = tk.Button(self.btn_frm,text="Sign out",command=self.sign_out)
+        self.sign_out.grid(row=0,column=3)
+        
         self.binding()
         
         if self.run_type == "guest":
@@ -109,17 +112,22 @@ class Runner(tk.Tk):
             current = (self.labels[1][curr]).cget("text")
             os.system("sh %s"%current)
     
-    def destroy(self):
+    def destroy(self,sign_out=False):
         if self.run_type == "user":
             with shelve.open("database") as db:     #update the user in the database
                 name = self.res["name"]
                 user = db[name]
                 user["programs"] = self.res["programs"]
                 db[name] = user
-            with open("type.json","w") as f:
-                json.dump(self.res,f)       #update type.json to include the new added programs
+            if(not sign_out):
+                with open("type.json","w") as f:
+                    json.dump(self.res,f)       #update type.json to include the new added programs
         super().destroy()
-
+    def sign_out(self):
+        os.remove("type.json")
+        if self.run_type == "guest":
+            os.remove("data_file")
+        self.destroy(sign_out=True)
 
 class Login(tk.Tk):     #a login interface used to select between guest/sign in/sign up by creating a json file
     def __init__(self):
@@ -130,21 +138,22 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
         
         tk.Label(self,text="---------------------").pack()
         
-        self.sign_in_btn = tk.Button(self,text="Sign in as existing user",command=self.sign_in)
+        self.sign_in_btn = tk.Button(self,text="Sign in as existing user",command=lambda :self.sign("in"))
         self.sign_in_btn.pack()
         
         tk.Label(self,text="---------------------").pack()
         
-        self.sign_up_btn = tk.Button(self,text="Create new user")
+        self.sign_up_btn = tk.Button(self,text="Create new user",command=lambda :self.sign("up"))
         self.sign_up_btn.pack()
     def guest(self):
         res = {"type":"guest"}
         with open("type.json","w") as f:
             json.dump(res,f)
         self.destroy()
-    def sign_in(self):
+    def sign(self,type):        #type = in | up
         self.login_window = tk.Tk()
-        # self.login_window.resizable(False,False)
+        self.login_window.title(f"Sign {type}")
+        self.login_window.resizable(False,False)
         
         tk.Label(self.login_window,text="username").grid(row=0,column=0)
         self.login_window.username = tk.Entry(self.login_window);self.login_window.username.grid(row=0,column=1)
@@ -154,17 +163,16 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
         
         self.login_window.error = tk.Label(self.login_window,text="");self.login_window.error.grid(row=2,column=0)
         
-        self.login_window.submit = tk.Button(self.login_window,text="Sign in",command=self.verify);self.login_window.submit.grid(row=3,column=0)
+        self.login_window.submit = tk.Button(self.login_window,text=f"Sign {type}",command=self.verify_in if type=="in" else self.verify_up);self.login_window.submit.grid(row=3,column=0)
         self.login_window.cancel = tk.Button(self.login_window,text="Cancel",command=self.login_window.destroy);self.login_window.cancel.grid(row=3,column=1)
-
-        
-    def verify(self):
+    
+    def verify_in(self):       #verify the sign in process 
         with shelve.open("database") as db:
             try:
-                login_username = self.login_window.username.get()
-                login_password = self.login_window.password.get()
+                login_username = self.login_window.username.get()   #take the values from the username Entry
+                login_password = self.login_window.password.get()   #take the values from the password Entry
                 user = db[login_username]
-                if user["password"] == login_password:
+                if user["password"] == login_password:  #Success
                     res = {"type":"user","name":login_username,"programs":user["programs"]}
                     with open("type.json","w") as f:
                         json.dump(res,f)
@@ -174,6 +182,23 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
                     self.login_window.error.configure(text="Wrong password!")
             except KeyError:    #user don't exist
                 self.login_window.error.configure(text="username don't exist!")
+    def verify_up(self):
+        with shelve.open("database") as db:
+            login_username = self.login_window.username.get()
+            login_password = self.login_window.password.get()
+            try:
+                user = db[login_username]   #used to see if it raises any error
+                self.login_window.error.configure(text="Username already exists!")
+            except KeyError:    #user don't exist => can register new username
+                if(len(login_password)>=8): #saves the user in db and return res in type.json
+                    db[login_username] = {'password':login_password,'programs':[]}
+                    res = {"type":"user","name":login_username,"programs":[]}
+                    with open("type.json","w") as f:
+                        json.dump(res,f)
+                    self.login_window.destroy()
+                    self.destroy()
+                else:
+                    self.login_window.error.configure(text="Password is too short!")
 class User:
     def __init__(self,username,password):
         self.username = username
