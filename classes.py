@@ -61,16 +61,7 @@ class Runner(tk.Tk):
         
         self.binding()
         
-        if self.run_type == "guest":
-            try:
-                self.data_file = open("data_file","r")      #when first opening the runner import the executables in data_file
-                self.added_programs(self.data_file)                          #by adding them to the interface
-            except FileNotFoundError:
-                pass
-            finally:
-                self.data_file = open("data_file","a+")      #then convert the open mode to append
-        elif self.run_type == "user":
-            self.added_programs(self.res["programs"])
+        self.added_programs(self.res["programs"])
         
     def binding(self):        #create bindings for moving up and down
         self.bind("<Down>",lambda x:self.highlight_next(1))
@@ -90,8 +81,7 @@ class Runner(tk.Tk):
             is_last = (curr==len(self.labels[1])-1)
             self.labels[1][curr].destroy()
             del self.labels[1][curr]
-            if self.run_type == "user":
-                del self.res["programs"][curr]
+            del self.res["programs"][curr]
             
             if is_last:
                 curr-=1
@@ -101,8 +91,6 @@ class Runner(tk.Tk):
             except IndexError:  #incase all programs were deleted
                 pass
             
-            #if self.run_type == "guest":
-            #    self.data_file.write(lbl.cget("text")+"\n")     # delete the program from the data file
     def added_programs(self,program_list):      #used to add existing labels in the data file
         for line in program_list:
             line = line.strip()
@@ -118,10 +106,7 @@ class Runner(tk.Tk):
             lbl = tk.Label(self.container.scrollable_frame, text=filename)
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
             self.labels[1].append(lbl)
-            if self.run_type == "guest":
-                self.data_file.write(lbl.cget("text")+"\n")     # added the new program to the data file
-            elif self.run_type == "user":
-                self.res["programs"].append(lbl.cget("text") ) 
+            self.res["programs"].append(lbl.cget("text") ) 
             lbl.pack()
     def runfile(self,runall=False):
         if runall:
@@ -139,14 +124,12 @@ class Runner(tk.Tk):
                 user = db[name]
                 user["programs"] = self.res["programs"]
                 db[name] = user
-            if(not sign_out):
-                with open("type.json","w") as f:
-                    json.dump(self.res,f)       #update type.json to include the new added programs
+        if(not sign_out):
+            with open("type.json","w") as f:
+                json.dump(self.res,f)       #update type.json to include the new added programs
         super().destroy()
     def sign_out(self):
         os.remove("type.json")
-        if self.run_type == "guest":
-            os.remove("data_file")
         self.destroy(sign_out=True)
 
 class Login(tk.Tk):     #a login interface used to select between guest/sign in/sign up by creating a json file
@@ -167,7 +150,7 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
         self.sign_up_btn = tk.Button(self,text="Create new user",command=lambda :self.sign("up"))
         self.sign_up_btn.pack()
     def guest(self):
-        res = {"type":"guest"}
+        res = {"type":"guest","programs":[]}
         with open("type.json","w") as f:
             json.dump(res,f)
         self.destroy()
@@ -220,8 +203,7 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
                     self.destroy()
                 else:
                     self.login_window.error.configure(text="Password is too short!")
-class User:
-    def __init__(self,username,password):
-        self.username = username
-        self.password = password
-        
+
+                    
+                    
+                    
