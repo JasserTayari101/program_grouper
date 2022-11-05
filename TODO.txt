@@ -1,1 +1,1 @@
-make it that guests use type.json for program storage
+add account settings
