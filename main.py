@@ -4,7 +4,7 @@ if not pth.isfile("type.json"):     #type.json indicate the behavior of the runn
     login = classes.Login()
     login.mainloop()                #if a login type is selected then type.json exists
     
-try:        
+try:       #in case no login type is selected then type.json don't exist 
     with open("type.json","r") as f:
         try:
             res = json.load(f)
@@ -12,5 +12,5 @@ try:
             runner.mainloop()
         except KeyError:
             pass
-except FileNotFoundError:       #else catch the error here
+except FileNotFoundError:       # catch the error here
     print("No Login type chosen!")

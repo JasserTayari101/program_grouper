@@ -28,6 +28,7 @@ class ScrollFrame(tk.Frame):
 class Runner(tk.Tk):
     def __init__(self,res):
         super().__init__()
+        self.title("Program Grouper")
         self.os_name = os.name      #used for os specific operations (windows/linux)
         self.res = res
         self.run_type = res["type"]
@@ -111,7 +112,6 @@ class Runner(tk.Tk):
             curr = self.labels[0]
             current = (self.labels[1][curr]).cget("text")
             os.system("sh %s"%current)
-    
     def destroy(self,sign_out=False):
         if self.run_type == "user":
             with shelve.open("database") as db:     #update the user in the database
@@ -132,6 +132,7 @@ class Runner(tk.Tk):
 class Login(tk.Tk):     #a login interface used to select between guest/sign in/sign up by creating a json file
     def __init__(self):
         super().__init__()
+        self.title("Choose option")
         self.resizable(False,False)
         self.guest_btn = tk.Button(self,text="Login as guest",command=self.guest)
         self.guest_btn.pack()
