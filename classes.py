@@ -68,13 +68,14 @@ class Runner(tk.Tk):
             except FileNotFoundError:
                 pass
             finally:
-                self.data_file = open("data_file","a")      #then convert the open mode to append
+                self.data_file = open("data_file","a+")      #then convert the open mode to append
         elif self.run_type == "user":
             self.added_programs(self.res["programs"])
         
     def binding(self):        #create bindings for moving up and down
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
+        self.bind("<Delete>",lambda x:self.delete_selected() )
     def highlight_next(self,increm):
         list_lbls = self.labels[1]
         curr = self.labels[0]   #the current selected label
@@ -83,6 +84,25 @@ class Runner(tk.Tk):
             curr+=increm
             list_lbls[curr].configure(bg="grey")
             self.labels = (curr,list_lbls)
+    def delete_selected(self):
+        if self.labels[1]:
+            curr = self.labels[0]
+            is_last = (curr==len(self.labels[1])-1)
+            self.labels[1][curr].destroy()
+            del self.labels[1][curr]
+            if self.run_type == "user":
+                del self.res["programs"][curr]
+            
+            if is_last:
+                curr-=1
+            self.labels = (curr,self.labels[1])
+            try:
+                self.labels[1][curr].configure(bg="grey")   #grey the current selected one
+            except IndexError:  #incase all programs were deleted
+                pass
+            
+            #if self.run_type == "guest":
+            #    self.data_file.write(lbl.cget("text")+"\n")     # delete the program from the data file
     def added_programs(self,program_list):      #used to add existing labels in the data file
         for line in program_list:
             line = line.strip()
