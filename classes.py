@@ -109,14 +109,21 @@ class Runner(tk.Tk):
             self.res["programs"].append(lbl.cget("text") ) 
             lbl.pack()
     def runfile(self,runall=False):
+        to_run = []
         if runall:
             for lbl in self.labels[1]:
                 name = lbl.cget("text")
-                os.system("sh %s"%name)    
+                to_run.append(name)
         else:
             curr = self.labels[0]
-            current = (self.labels[1][curr]).cget("text")
-            os.system("sh %s"%current)
+            name = (self.labels[1][curr]).cget("text")
+            to_run.append(name)
+        for current in to_run:
+            res = os.system("sh %s"%current)
+            while res:
+                print(res)
+                if res == 512:
+                    res = os.system("%s &"%current)
     def destroy(self,sign_out=False):
         if self.run_type == "user":
             with shelve.open("database") as db:     #update the user in the database
