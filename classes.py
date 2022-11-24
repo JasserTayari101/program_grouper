@@ -119,11 +119,14 @@ class Runner(tk.Tk):
             name = (self.labels[1][curr]).cget("text")
             to_run.append(name)
         for current in to_run:
-            res = os.system("sh %s"%current)
-            while res:
-                print(res)
-                if res == 512:
-                    res = os.system("%s &"%current)
+            if self.os_name == "posix":
+                res = os.system("sh %s"%current)
+                while res:
+                    print(res)
+                    if res == 512:
+                        res = os.system("%s &"%current)
+            else:
+                os.system("%s"%current)
     def destroy(self,sign_out=False):
         if self.run_type == "user":
             with shelve.open("database") as db:     #update the user in the database
