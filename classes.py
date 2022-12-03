@@ -3,6 +3,9 @@ from tkinter import filedialog, Text
 import os
 import shelve
 import json
+from collections import OrderedDict
+
+
 
 class ScrollFrame(tk.Frame):
     def __init__(self):
@@ -33,6 +36,8 @@ class Runner(tk.Tk):
         self.res = res
         self.run_type = res["type"]
         self.labels = (0,[])    #   used for keeping track of the list of labels and the current selected one indicated by an integer, might be changed to a linked list DS
+        self.category = "all"   #   represent all categories at first
+        
         self.resizable(False,False)
         self.rowconfigure(0,minsize=450,weight=1)
         self.rowconfigure(1,minsize=50)
@@ -56,8 +61,12 @@ class Runner(tk.Tk):
         self.all_btn = tk.Button(self.btn_frm,text="RUN ALL",command=lambda :self.runfile(runall=True))
         self.all_btn.grid(row=0,column=2)
         
+        self.catgr_btn = tk.Button(self.btn_frm,text="Add Category",command=self.add_category)
+        self.catgr_btn.grid(row=0,column=3)
+        
+        
         self.sign_out = tk.Button(self.btn_frm,text="Sign out",command=self.sign_out)
-        self.sign_out.grid(row=0,column=3)
+        self.sign_out.grid(row=0,column=4)
         
         self.binding()
         
@@ -67,15 +76,16 @@ class Runner(tk.Tk):
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
         self.bind("<Delete>",lambda x:self.delete_selected() )
+        self.bind("<a>",self.rotate_category )
         
     def highlight_next(self,increm):
-        list_lbls = self.labels[1]
+        dict_lbls = self.labels[1]
         curr = self.labels[0]   #the current selected label
-        if  ( (increm==1) and (curr<len(list_lbls)-1 ) ) or ( (increm==-1) and (curr>0)):   #check for bounds
-            list_lbls[curr].configure(bg="white")
+        if  ( (increm==1) and (curr<len(dict_lbls)-1 ) ) or ( (increm==-1) and (curr>0)):   #check for bounds
+            dict_lbls[curr].configure(bg="white")
             curr+=increm
-            list_lbls[curr].configure(bg="grey")
-            self.labels = (curr,list_lbls)
+            dict_lbls[curr].configure(bg="grey")
+            self.labels = (curr,dict_lbls)
     def delete_selected(self):
         if self.labels[1]:
             curr = self.labels[0]
@@ -91,34 +101,51 @@ class Runner(tk.Tk):
                 self.labels[1][curr].configure(bg="grey")   #grey the current selected one
             except IndexError:  #incase all programs were deleted
                 pass
-            
-    def added_programs(self,program_list):      #loads programs from type.json
-        for line in program_list:
-            line = line.strip()
-            lbl = tk.Label(self.container.scrollable_frame, text=line)
-            lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
-            self.labels[1].append(lbl)
-            lbl.pack()
+    
+    def rotate_category(self):
+        curr = self.labels[0]
+        lbls = self.labels[1]
+        
+        curr_lbl = lbls[curr]
+        text_parts = curr_lbl.cget("text").split(':')
+        
+        
+        curr_lbl.configure("text")
+    
+    
+    
+    def added_programs(self,program_dict):      #loads programs from type.json
+        for category,programs in program_dict.items():
+            for program in programs:
+                program = program.strip()
+                lbl = tk.Label(self.container.scrollable_frame, text=category+':'+program)
+                lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
+                self.labels[1].append(lbl)
+                lbl.pack()
         
     def openfile(self):
         patterns = ("*.bash","*.sh","*.zsh") if self.os_name.lower() == "posix" else ("*.exe",)
         filename = filedialog.askopenfilename(initialdir=os.environ.get("HOME"),filetypes=(("executables",patterns),("any","*.*") ) )  #platform specific patterns
         if filename:
-            lbl = tk.Label(self.container.scrollable_frame, text=filename)
+            lbl = tk.Label(self.container.scrollable_frame, text='general:'+filename)   #default category is general, later will have a way to change that
             lbl.configure(bg=("white" if len(self.labels[1]) else "grey") ) #highlight it if it's the first label
             self.labels[1].append(lbl)
-            self.res["programs"].append(filename)   #save it temporarily
+            try:
+                self.res["programs"]['general'].append(filename)  #save it temporarily
+            except Exception:
+                self.res["programs"]['general'] = []
+                self.res["programs"]['general'].append(filename)  #save it temporarily
             lbl.pack()
             
     def runfile(self,runall=False):
         to_run = []
         if runall:
             for lbl in self.labels[1]:
-                name = lbl.cget("text")
+                name = lbl.cget("text").split(':')[1]
                 to_run.append(name)
         else:
             curr = self.labels[0]
-            name = (self.labels[1][curr]).cget("text")
+            name = (self.labels[1][curr]).cget("text").split(':')[1]
             to_run.append(name)
         for current in to_run:
             if self.os_name == "posix":
@@ -129,6 +156,37 @@ class Runner(tk.Tk):
                         res = os.system("%s &"%current)
             else:
                 os.system("%s"%current)
+                
+    def add_category(self):
+        
+        def add():
+            category = self.entry.get()
+            
+            try:    #check if exist
+                self.res["programs"][category]
+                self.err_lbl.configure(text="Category already exist!")
+            except Exception:   #it does not
+                self.res["programs"][category] = []
+            
+        
+        self.add_wind = tk.Tk()
+        self.add_wind.title("Add A Category")
+        self.add_wind.resizable(False,False)
+        
+        self.entry = tk.Entry(self.add_wind)
+        self.entry.pack()
+        
+        self.err_lbl = tk.Label(self.add_wind,text="")
+        self.err_lbl.pack()
+        
+        
+        sbmt_btn = tk.Button(self.add_wind,text="Add",command=add)
+        sbmt_btn.pack()
+        
+        cancel_btn = tk.Button(self.add_wind,text="Cancel",command=self.add_wind.destroy )
+        cancel_btn.pack()
+                   
+    
     def destroy(self,sign_out=False):
         if self.run_type == "user":
             with shelve.open("database") as db:     #update the user in the database
@@ -144,7 +202,6 @@ class Runner(tk.Tk):
     def sign_out(self):
         os.remove("type.json")
         self.destroy(sign_out=True)
-
 
 
 
@@ -170,7 +227,7 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
         self.sign_up_btn.pack()
     
     def guest(self):
-        res = {"type":"guest","programs":[]}
+        res = {"type":"guest","programs":{}}
         with open("type.json","w") as f:
             json.dump(res,f)
         self.destroy()
@@ -217,8 +274,8 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
                 self.login_window.error.configure(text="Username already exists!")
             except KeyError:    #user don't exist => can register new username
                 if(len(login_password)>=8): #saves the user in db and return res in type.json
-                    db[login_username] = {'password':login_password,'programs':[]}
-                    res = {"type":"user","name":login_username,"programs":[]}
+                    db[login_username] = {'password':login_password,'programs':{} }
+                    res = {"type":"user","name":login_username,"programs": {}}
                     with open("type.json","w") as f:
                         json.dump(res,f)
                     self.login_window.destroy()

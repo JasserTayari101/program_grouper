@@ -1,1 +1,14 @@
-add account settings.
+1)Add categories and filtering of programs
+
+2)add account settings.
+
+
+1:Currently storing the programs on the form of a list but I want to make it in the form of categories,
+so the best data structure will be dictionary/hashmap with categories as keys and a list of programs as values.
+
+In the interface by default the user will have all programs loaded(to be changed to prompting for category), and then he will
+filter them out
+
+-Right now I did the change for programs as lists to dicts, this is easier to look up programs based on categories
+when the user enters a category but Will be hard to navigate up and down in the menu since dicts are not ordered,
+so might use collections.OrderedDict
