@@ -67,10 +67,11 @@ class Runner(tk.Tk):
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
         self.bind("<Delete>",lambda x:self.delete_selected() )
+        
     def highlight_next(self,increm):
         list_lbls = self.labels[1]
         curr = self.labels[0]   #the current selected label
-        if  ( (increm==1) and (curr<len(list_lbls)-1 ) ) or ( (increm==-1) and (curr>0)):
+        if  ( (increm==1) and (curr<len(list_lbls)-1 ) ) or ( (increm==-1) and (curr>0)):   #check for bounds
             list_lbls[curr].configure(bg="white")
             curr+=increm
             list_lbls[curr].configure(bg="grey")
@@ -91,7 +92,7 @@ class Runner(tk.Tk):
             except IndexError:  #incase all programs were deleted
                 pass
             
-    def added_programs(self,program_list):      #used to add existing labels in the data file
+    def added_programs(self,program_list):      #loads programs from type.json
         for line in program_list:
             line = line.strip()
             lbl = tk.Label(self.container.scrollable_frame, text=line)
@@ -104,10 +105,11 @@ class Runner(tk.Tk):
         filename = filedialog.askopenfilename(initialdir=os.environ.get("HOME"),filetypes=(("executables",patterns),("any","*.*") ) )  #platform specific patterns
         if filename:
             lbl = tk.Label(self.container.scrollable_frame, text=filename)
-            lbl.configure(bg=("white" if len(self.labels[1]) else "grey") )
+            lbl.configure(bg=("white" if len(self.labels[1]) else "grey") ) #highlight it if it's the first label
             self.labels[1].append(lbl)
-            self.res["programs"].append(lbl.cget("text") ) 
+            self.res["programs"].append(filename)   #save it temporarily
             lbl.pack()
+            
     def runfile(self,runall=False):
         to_run = []
         if runall:
@@ -138,32 +140,41 @@ class Runner(tk.Tk):
             with open("type.json","w") as f:
                 json.dump(self.res,f)       #update type.json to include the new added programs
         super().destroy()
+        
     def sign_out(self):
         os.remove("type.json")
         self.destroy(sign_out=True)
+
+
+
+
+
 
 class Login(tk.Tk):     #a login interface used to select between guest/sign in/sign up by creating a json file
     def __init__(self):
         super().__init__()
         self.title("Choose option")
         self.resizable(False,False)
+        
         self.guest_btn = tk.Button(self,text="Login as guest",command=self.guest)
         self.guest_btn.pack()
-        
         tk.Label(self,text="---------------------").pack()
+        
         
         self.sign_in_btn = tk.Button(self,text="Sign in as existing user",command=lambda :self.sign("in"))
         self.sign_in_btn.pack()
-        
         tk.Label(self,text="---------------------").pack()
+        
         
         self.sign_up_btn = tk.Button(self,text="Create new user",command=lambda :self.sign("up"))
         self.sign_up_btn.pack()
+    
     def guest(self):
         res = {"type":"guest","programs":[]}
         with open("type.json","w") as f:
             json.dump(res,f)
         self.destroy()
+    
     def sign(self,type):        #type = in | up
         self.login_window = tk.Tk()
         self.login_window.title(f"Sign {type}")
@@ -192,10 +203,11 @@ class Login(tk.Tk):     #a login interface used to select between guest/sign in/
                         json.dump(res,f)
                     self.login_window.destroy()
                     self.destroy()
-                else:
+                else:   #wrong password
                     self.login_window.error.configure(text="Wrong password!")
             except KeyError:    #user don't exist
                 self.login_window.error.configure(text="username don't exist!")
+    
     def verify_up(self):
         with shelve.open("database") as db:
             login_username = self.login_window.username.get()
