@@ -64,9 +64,11 @@ class Runner(tk.Tk):
         self.catgr_btn = tk.Button(self.btn_frm,text="Add Category",command=self.add_category)
         self.catgr_btn.grid(row=0,column=3)
         
-        
         self.sign_out = tk.Button(self.btn_frm,text="Sign out",command=self.sign_out)
         self.sign_out.grid(row=0,column=4)
+        
+        self.help_lbl = tk.Label(self.btn_frm,text="Arrows:move/c:delete/c:change category")
+        self.help_lbl.grid(row=1,column=2)
         
         self.binding()
         
@@ -75,8 +77,8 @@ class Runner(tk.Tk):
     def binding(self):        #create bindings for moving up and down
         self.bind("<Down>",lambda x:self.highlight_next(1))
         self.bind("<Up>",lambda x :self.highlight_next(-1))
-        self.bind("<Delete>",lambda x:self.delete_selected() )
-        self.bind("<a>",self.rotate_category )
+        self.bind("<d>",lambda x:self.delete_selected() )
+        self.bind("<c>",lambda x:self.rotate_category() )
         
     def highlight_next(self,increm):
         dict_lbls = self.labels[1]
@@ -109,10 +111,16 @@ class Runner(tk.Tk):
         curr_lbl = lbls[curr]
         text_parts = curr_lbl.cget("text").split(':')
         
+        old_category = text_parts[0]
+        new_category = 'other' if old_category=='general' else 'general'
+        name = text_parts[1]
         
-        curr_lbl.configure("text")
-    
-    
+        
+        self.res["programs"][old_category].remove(name)
+        self.res["programs"][new_category].append(name)
+        
+        curr_lbl.configure(text=new_category+':'+name)
+        
     
     def added_programs(self,program_dict):      #loads programs from type.json
         for category,programs in program_dict.items():
