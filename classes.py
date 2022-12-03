@@ -67,7 +67,7 @@ class Runner(tk.Tk):
         self.sign_out = tk.Button(self.btn_frm,text="Sign out",command=self.sign_out)
         self.sign_out.grid(row=0,column=4)
         
-        self.help_lbl = tk.Label(self.btn_frm,text="Arrows:move/c:delete/c:change category")
+        self.help_lbl = tk.Label(self.btn_frm,text="Arrows:move/d:delete/c:change category")
         self.help_lbl.grid(row=1,column=2)
         
         self.binding()
@@ -92,9 +92,15 @@ class Runner(tk.Tk):
         if self.labels[1]:
             curr = self.labels[0]
             is_last = (curr==len(self.labels[1])-1)
+            
+            parts = self.labels[1][curr].cget("text").split(':')
+            category = parts[0] 
+            name = parts[1]
+            
+            self.res["programs"][category].remove(name)
             self.labels[1][curr].destroy()
             del self.labels[1][curr]
-            del self.res["programs"][curr]
+            
             
             if is_last:
                 curr-=1
